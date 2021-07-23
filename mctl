@@ -1,0 +1,96 @@
+#!/bin/bash
+SERVER_FILE="server.jar"
+
+MINECRAFT_START_COMMAND="/usr/bin/java -Xms2G -Xmx8G -jar ${SERVER_FILE} nogui"
+ISHARD=false
+SERVER_USER="minecraft"
+SERVER_GROUP="minecraft"
+SOCKET_PATH="/tmp/console_socket"
+PID_FILE="/tmp/mctl_pid"
+
+check_for_sudo(){
+  if [ "$EUID" -ne 0 ]; then
+    echo -e "[ERROR] command must be run as super user"
+    echo -e "try sudo mctl [option] <command>"
+    exit
+  fi
+}
+
+check_if_running(){
+  if [ -e $PID_FILE ]; then
+    PID=cat $PID_FILE
+    if ps -p $PID; then
+      echo -e "[ERROR] minecraft server is already running. see mctl status for more information"
+      exit 1
+    fi
+    rm $PID_FILE
+  fi
+  if tmux -S $SOCKET_PATH ls | grep $TMUX_SESSION_NAME; then
+    echo -e "[ERROR] tmux session exist but is running empty, delete session and retry"
+    exit 1
+  fi
+}
+
+function start(){
+  check_for_sudo
+  check_if_running
+  
+  #check if tmux socket exist, if so delete it for safety
+  if [ -e $SOCKET_PATH ]; then
+    mkdir /tmp/old_sockets/
+    mv $SOCKET_PATH /tmp/old_sockets/
+  fi
+  
+  #try to connect to the user running the minecraft process
+  if ! su - $SERVER_USER > /dev/null 2>&1; then
+    echo -e "[ERROR] could not reach minecraft user"
+    exit 1
+  fi
+  
+  if ! tmux -S $SOCKET_PATH new -s $TMUX_SESSION_NAME -d $MINECRAFT_START_COMMAND; then
+    echo -e "[ERROR] could not launch tmux session"
+    exit 1
+  fi
+}
+
+function stop(){
+  check_for_sudo
+  echo -e "sopping command"
+}
+
+function status(){
+  echo -e "status command"
+}
+
+function restart(){
+  check_for_sudo
+  echo -e "restart command"
+}
+
+function help(){
+  echo -e "usage: mctl [option] <command>"
+  echo -e ""
+  echo -e "mctl start                   start the minecraft server"
+  echo -e "mctl stop                    stop the minecraft server"
+  echo -e "mctl status                  display the status for the minecraft server"
+  echo -e "mctl restart                 restart the minecraft server"
+  echo -e "mctl -h, --help              display this message"
+  exit 1
+}
+
+if [ $# -gt 1 ]; then
+  echo -e "[ERROR] too many arguments."
+  help
+fi
+
+case $1 in
+  start ) start ;;
+  stop ) stop ;;
+  restart ) restart ;;
+  status ) status ;;
+  --help ) help ;;
+  -h ) help ;;
+  * ) echo -e "[ERROR] Invalid argument" && help ;;
+esac
+
+
