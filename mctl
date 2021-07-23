@@ -41,9 +41,9 @@ function start(){
   
   #check if tmux socket exist, if so delete it for safety
   echo -e "[LOG] checking for tmux socket"
-  if [ -e $SOCKET_PATH ]; then
+  if [ -e $TMUX_SOCKET_PATH ]; then
     echo -e "[LOG] found tmux socket"
-    if rm $SOCKET_PATH; then
+    if rm $TMUX_SOCKET_PATH; then
       echo -e "[LOG] removed old socket"
     else
       echo -e "[WARN] could not removed old socket, this may cause errors"
@@ -51,7 +51,7 @@ function start(){
     fi
   
   echo -e "[LOG] executing start command"
-  if ! sudo -u $SERVER_USER tmux -S $SOCKET_PATH new -s $TMUX_SESSION_NAME -d '${MINECRAFT_START_COMMAND}'; then
+  if ! sudo -u $SERVER_USER tmux -S $TMUX_SOCKET_PATH new -s $TMUX_SESSION_NAME -d '${MINECRAFT_START_COMMAND}'; then
     echo -e "[ERROR] could not launch tmux session"
     exit 1
   fi
