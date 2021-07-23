@@ -1,12 +1,16 @@
 #!/bin/bash
-SERVER_FILE="server.jar"
 
 MINECRAFT_START_COMMAND="/usr/bin/java -Xms2G -Xmx8G -jar ${SERVER_FILE} nogui"
 ISHARD=false
+
 SERVER_USER="minecraft"
 SERVER_GROUP="minecraft"
-SOCKET_PATH="/tmp/console_socket"
+SERVER_FILE="server.jar"
+
 PID_FILE="/tmp/mctl_pid"
+
+TMUX_SESSION_NAME="minecraft"
+TMUX_SOCKET_PATH="/tmp/console_socket"
 
 check_for_sudo(){
   if [ "$EUID" -ne 0 ]; then
