@@ -43,23 +43,14 @@ function start(){
   echo -e "[LOG] checking for tmux socket"
   if [ -e $SOCKET_PATH ]; then
     echo -e "[LOG] found tmux socket"
-    if [ ! -e "/tmp/old_sockets" ]; then
-      mkdir /tmp/old_sockets/
-    fi
-    mv $SOCKET_PATH /tmp/old_sockets/
-    echo -e "moved tmux socket"
-  fi
-  
-  #try to connect to the user running the minecraft process
-  echo -e "[LOG] connecting to process user"
-  if ! su - $SERVER_USER > /dev/null 2>&1; then
-    echo -e "[ERROR] could not reach minecraft user"
-    exit 1
-    echo -e "[LOG] sucessfully switched to ${id}"
+    if rm $SOCKET_PATH; then
+      echo -e "[LOG] removed old socket"
+    else
+      echo -e "[WARN] could not removed old socket, this may cause errors"
   fi
   
   echo -e "[LOG] executing start command"
-  if ! tmux -S $SOCKET_PATH new -s $TMUX_SESSION_NAME -d '${MINECRAFT_START_COMMAND}'; then
+  if ! sudo -u $SERVER_USER tmux -S $SOCKET_PATH new -s $TMUX_SESSION_NAME -d '${MINECRAFT_START_COMMAND}'; then
     echo -e "[ERROR] could not launch tmux session"
     exit 1
   fi
