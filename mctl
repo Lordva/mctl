@@ -41,7 +41,9 @@ function start(){
   
   #check if tmux socket exist, if so delete it for safety
   if [ -e $SOCKET_PATH ]; then
-    mkdir /tmp/old_sockets/
+    if [ ! -e "/tmp/old_sockets" ]; then
+      mkdir /tmp/old_sockets/
+    fi
     mv $SOCKET_PATH /tmp/old_sockets/
   fi
   
