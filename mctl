@@ -48,7 +48,7 @@ function start(){
     else
       echo -e "[WARN] could not removed old socket, this may cause errors"
     fi
-    fi
+  fi
   
   echo -e "[LOG] executing start command"
   if ! sudo -u $SERVER_USER tmux -S $TMUX_SOCKET_PATH new -s $TMUX_SESSION_NAME -d '${MINECRAFT_START_COMMAND}'; then
