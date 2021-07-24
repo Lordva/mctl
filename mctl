@@ -29,7 +29,7 @@ check_if_running(){
     fi
     rm $PID_FILE
   fi
-  if tmux -S $SOCKET_PATH ls | grep $TMUX_SESSION_NAME; then
+  if tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME; then
     echo -e "[ERROR] tmux session exist but is running empty, delete session and retry"
     exit 1
   fi
@@ -37,22 +37,9 @@ check_if_running(){
 
 function start(){
   #check_for_sudo
-  check_if_running
-  
-  #check if tmux socket exist, if so delete it for safety
-  echo -e "[LOG] checking for tmux socket"
-  if [ -e $TMUX_SOCKET_PATH ]; then
-    echo -e "[LOG] found tmux socket"
-    if rm $TMUX_SOCKET_PATH; then
-      echo -e "[LOG] removed old socket"
-    else
-      echo -e "[WARN] could not removed old socket, this may cause errors"
-    fi
-  fi
-  
+  check_if_running 
   echo -e "[LOG] executing start command"
   sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s minecraft -d 'bash /srv/mc/start.sh'"
-  echo -e "end of command"
 }
 
 function stop(){
