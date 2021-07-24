@@ -36,7 +36,7 @@ check_if_running(){
 }
 
 function start(){
-  check_for_sudo
+  #check_for_sudo
   check_if_running
   
   #check if tmux socket exist, if so delete it for safety
@@ -51,14 +51,11 @@ function start(){
     fi
   
   echo -e "[LOG] executing start command"
-  if ! sudo -u $SERVER_USER tmux -S $TMUX_SOCKET_PATH new -s $TMUX_SESSION_NAME -d '${MINECRAFT_START_COMMAND}'; then
-    echo -e "[ERROR] could not launch tmux session"
-    exit 1
-  fi
+  sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s minecraft -d 'bash /srv/mc/start.sh'"
+  echo -e "end of command"
 }
 
 function stop(){
-  check_for_sudo
   echo -e "sopping command"
 }
 
@@ -67,7 +64,6 @@ function status(){
 }
 
 function restart(){
-  check_for_sudo
   echo -e "restart command"
 }
 
