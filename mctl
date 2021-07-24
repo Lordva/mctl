@@ -20,6 +20,23 @@ check_for_sudo(){
   fi
 }
 
+progress-bar() {
+  local duration=${1}
+
+
+    already_done() { for ((done=0; done<$elapsed; done++)); do printf "▇"; done }
+    remaining() { for ((remain=$elapsed; remain<$duration; remain++)); do printf " "; done }
+    percentage() { printf "| %s%%" $(( (($elapsed)*100)/($duration)*100/100 )); }
+    clean_line() { printf "\r"; }
+
+  for (( elapsed=1; elapsed<=$duration; elapsed++ )); do
+      already_done; remaining; percentage
+      sleep 1
+      clean_line
+  done
+  clean_line
+}
+
 check_if_running(){
   if [ -e $PID_FILE ]; then
     PID=cat $PID_FILE
@@ -29,55 +46,83 @@ check_if_running(){
     fi
     rm $PID_FILE
   fi
-  if tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME; then
+  if tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
     echo -e "[ERROR] tmux session exist but is running empty, delete session and retry"
     exit 1
   fi
 }
 
 function start(){
-  #check_for_sudo
   check_if_running 
   echo -e "[LOG] executing start command"
   sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s minecraft -d 'bash /srv/mc/start.sh'"
+  exit 0
 }
 
 function stop(){
-  echo -e "sopping command"
+  if ! tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
+    echo -e "[ERROR] cannot stop server, server is offline"
+    exit 1
+  fi
+  if [ $ISHARD == false ]; then
+    tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME 'say Arret du serveur dans 30 secondes' Enter
+    echo -e "[LOG] sleeping for 30s..."
+    progress-bar 30
+    echo -e "done"
+  fi
+  tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME 'say Arret du serveur !' Enter
+  sleep 3
+  tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME 'stop' Enter
+  tmux -S $TMUX_SOCKET_PATH kill-session -t $TMUX_SESSION_NAME
+  exit 0
 }
 
 function status(){
-  echo -e "status command"
+  
+  exit 0
 }
 
 function restart(){
   echo -e "restart command"
+  exit 0
 }
 
 function help(){
   echo -e "usage: mctl [option] <command>"
   echo -e ""
+  echo -e "commands:"
   echo -e "mctl start                   start the minecraft server"
   echo -e "mctl stop                    stop the minecraft server"
   echo -e "mctl status                  display the status for the minecraft server"
   echo -e "mctl restart                 restart the minecraft server"
+  echo
+  echo -e "options: "
   echo -e "mctl -h, --help              display this message"
+  echo -e "mctl -f --force              force the event execution without prior warning"
   exit 1
 }
 
-if [ $# -gt 1 ]; then
+function version(){
+  echo -e "mctl 0.0.1"
+  exit 0
+}
+
+if [ $# -gt 2 ]; then
   echo -e "[ERROR] too many arguments."
   help
 fi
 
-case $1 in
+for i in "$@"; do case $i in
   start ) start ;;
   stop ) stop ;;
   restart ) restart ;;
   status ) status ;;
-  --help ) help ;;
-  -h ) help ;;
+  -h | --help ) help ;;
+  -f | --force ) ISHARD=true ;;
   * ) echo -e "[ERROR] Invalid argument" && help ;;
 esac
+done
 
+echo -e "[ERROR] program require a command"
+help
 
