@@ -12,14 +12,6 @@ PID_FILE="/tmp/mctl_pid"
 TMUX_SESSION_NAME="minecraft"
 TMUX_SOCKET_PATH="/tmp/console_socket"
 
-check_for_sudo(){
-  if [ "$EUID" -ne 0 ]; then
-    echo -e "[ERROR] command must be run as super user"
-    echo -e "try sudo mctl [option] <command>"
-    exit
-  fi
-}
-
 progress-bar() {
   local duration=${1}
 
@@ -55,7 +47,7 @@ check_if_running(){
 function start(){
   check_if_running 
   echo -e "[LOG] executing start command"
-  sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s minecraft -d 'bash /srv/mc/start.sh'"
+  sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s minecraft -d 'bash /srv/mc/start.sh'" 
   exit 0
 }
 
