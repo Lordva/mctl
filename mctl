@@ -3,10 +3,17 @@
 MINECRAFT_START_COMMAND="/usr/bin/java -Xms2G -Xmx8G -jar ${SERVER_FILE} nogui"
 ISHARD=false
 
+# The server's base directory without the ending /
+SERVER_PATH="/srv/mc"
+
+# The linux user running the server
 SERVER_USER="minecraft"
 SERVER_GROUP="minecraft"
+
+#the name of the server file, could be forge.jar or spigot.jar, usualy it should be server.jar
 SERVER_FILE="server.jar"
 
+#wip
 SHELL_PID=$$
 PID_FILE="/tmp/mctl_pid"
 
@@ -67,13 +74,21 @@ function stop(){
   exit 0
 }
 
+function console(){
+  check_if_running
+  tail -f "$SERVER_PATH/logs/latest.log"
+  read -p "> " input
+  tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME "${input}" Enter
+  exit 0
+}
+
 function status(){
   if tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
     STATUS="running"
   else
     STATUS="stopped"
   fi
-  ps -A -o 'ppid pid command' | grep SHELL_PID
+  ps -A -o 'ppid pid command' | grep $SHELL_PID
   exit 0
 }
 
@@ -91,15 +106,17 @@ function help(){
   echo -e "mctl stop                    stop the minecraft server"
   echo -e "mctl status                  display the status for the minecraft server"
   echo -e "mctl restart                 restart the minecraft server"
+  echo -e "mctl console                 display the server console"
   echo
   echo -e "options: "
+  echo -e "mctl -s --send               send command to console without opening it"
   echo -e "mctl -h, --help              display this message"
   echo -e "mctl -f --force              force the event execution without prior warning"
   exit 1
 }
 
 function version(){
-  echo -e "mctl 0.1.1"
+  echo -e "mctl 0.1.2"
   exit 0
 }
 
@@ -113,6 +130,7 @@ for i in "$@"; do case $i in
   stop ) stop ;;
   restart ) restart ;;
   status ) status ;;
+  console ) console ;;
   -h | --help ) help ;;
   -f | --force ) ISHARD=true ;;
   * ) echo -e "[ERROR] Invalid argument" && help ;;
