@@ -84,7 +84,7 @@ function console(){
     exit 1
   fi
   user_input(){
-    read -p -r "> " input
+    read -r -p "> " input
     case $input in
       exit | quit | stop ) exit 0 ;;
       * ) tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME "${input}" Enter
