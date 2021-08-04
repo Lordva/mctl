@@ -87,7 +87,8 @@ function console(){
     read -r -p "> " input
     case $input in
       exit | quit | stop ) exit 0 ;;
-      * ) tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME "${input}" Enter
+      help | h ) echo -e "type exit to quit the console"
+      * ) tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME "${input}" Enter && tail -f $SERVER_PATH/logs/latest.log
     esac
   }
   trap user_input SIGINT
