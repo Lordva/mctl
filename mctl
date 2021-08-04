@@ -73,7 +73,8 @@ function status(){
   else
     STATUS="stopped"
   fi
-  ps -A -o 'ppid pid command' | grep SHELL_PID
+  echo $SHELL_PID
+  ps -A -o 'ppid pid command' | grep $SHELL_PID
   exit 0
 }
 
