@@ -91,13 +91,14 @@ function console(){
 
 function status(){
   if check_if_running; then
-    echo -e "${GREEN}● Server is online${RESET}"
-    echo -e "Server latest logs: "
-    tmux -S $TMUX_SOCKET_PATH capture-pane -pt $TMUX_SESSION_NAME
-  else
-    echo -e "${RED}● Server is offline${RESET}"
+    echo -e "[ ${GREEN}✔${RESET} ] - Server is online"
+    echo
     echo -e "  Server latest logs: "
-    tail $SERVER_PATH/logs/latest.log | awk 
+    tmux -S $TMUX_SOCKET_PATH capture-pane -pt $TMUX_SESSION_NAME -A 5
+  else
+    echo -e "[ ${RED}✕${RESET} ] - Server is offline"
+    echo -e "  Server latest logs: "
+    tail -n 5 $SERVER_PATH/logs/latest.log  
   fi
   exit 0
 }
