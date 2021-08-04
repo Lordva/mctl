@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source mctl.conf
+
 # colors
 
 RESET="\033[0m"         # Normal color
@@ -7,25 +9,8 @@ RED="\033[0;31m"        # Errors
 GREEN="\033[0;32m"      # Sucess
 BOLD="\033[1;01m"       # BOLD
 
+ISHARD=false # check if the -f flag is used
 
-MINECRAFT_START_COMMAND="/usr/bin/java -Xms2G -Xmx8G -jar ${SERVER_FILE} nogui"
-ISHARD=false
-
-# The server's base directory without the ending /
-SERVER_PATH="/srv/mc"
-
-# The linux user running the server
-SERVER_USER="minecraft"
-SERVER_GROUP="minecraft"
-
-#the name of the server file, could be forge.jar or spigot.jar, usualy it should be server.jar
-SERVER_FILE="server.jar"
-
-#wip
-SHELL_PID=$$
-PID_FILE="/tmp/mctl_pid"
-
-TMUX_SESSION_NAME="minecraft"
 TMUX_SOCKET_PATH="/tmp/console_socket"
 
 progress-bar() {
@@ -42,6 +27,28 @@ progress-bar() {
   clean_line
 }
 
+get_server(){
+  if [ -z $1 ]; then
+    echo -e "[${RED} ${RESET}] Command require an argument"
+    help
+  fi
+  for i in $SERVER_LIST_DIRECTORY/*; do
+    if grep "SERVER_NAME=$1" $i; then
+      source $i
+      echo -e "then"
+      success=0
+      shift
+    else
+      success=1
+    fi
+  done
+  if [[ $success == 1 ]]; then
+    echo -e "[ ${RED}✕${RESET} ] Could not find a server named $1"
+    echo -e "Check if the 'SERVER_NAME' field is correctly setup in the server's config file"
+    exit 1
+  fi
+}
+
 check_if_running(){
   if tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
     return 0
@@ -51,16 +58,18 @@ check_if_running(){
 }
 
 function start(){
+  get_server $1
   if check_if_running; then
     echo -e "[ ${RED}✕${RESET} ] tmux session is already running"
     echo -e "check that the session is not running empty with : tmux -S ${TMUX_SOCKET_PATH} a -t ${TMUX_SESSION_NAME}"
     exit 1
   fi
-  sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s minecraft -d 'bash /srv/mc/start.sh'" 
+  sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s $TMUX_SESSION_NAME -d 'bash /srv/mc/start.sh'" 
   exit 0
 }
 
 function stop(){
+  get_server $1
   if ! tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
     echo -e "[ ${RED}✕${RESET} ] cannot stop server, server is offline"
     exit 1
@@ -79,10 +88,12 @@ function stop(){
 }
 
 function console(){
+  get_server $1
   if ! check_if_running; then
     echo -e "[ ${RED}✕${RESET} ] server is not running"
     exit 1
   fi
+
   user_input(){
     read -r -p "> " input
     case $input in
@@ -97,6 +108,7 @@ function console(){
 }
 
 function status(){
+  get_server $1
   if check_if_running; then
     echo -e "[ ${GREEN}✔${RESET} ] - Server is online"
     echo
@@ -105,58 +117,58 @@ function status(){
   else
     echo -e "[ ${RED}✕${RESET} ] - Server is offline"
     echo -e "  Server latest logs: "
-    tail -n 5 $SERVER_PATH/logs/latest.log | awk '
-    /INFO/ {print "${GREEN} $0 "${RESET}"}
-    /WARN/ yellow
-    /*:*:*/ cian
-    /ERROR/ {print "${RED} $0 ${RESET}"}
-    ' 
+    tail -n 5 $SERVER_PATH/logs/latest.log 
   fi
   exit 0
 }
 
 function restart(){
-  stop
-  start
+  stop $1
+  start $1
   exit 0
 }
 
 function help(){
-  echo -e "${BOLD}usage${RESET}: mctl [option] <command>"
+  echo -e "${BOLD}usage${RESET}: mctl [option] <command> <server name>"
   echo -e ""
   echo -e "${BOLD}commands:${RESET}"
-  echo -e "mctl start                   start the minecraft server"
-  echo -e "mctl stop                    stop the minecraft server"
-  echo -e "mctl status                  display the status for the minecraft server"
-  echo -e "mctl restart                 restart the minecraft server"
-  echo -e "mctl console                 display the server console"
+  echo -e "mctl start   <server name>             start the minecraft server"
+  echo -e "mctl stop    <server name>             stop the minecraft server"
+  echo -e "mctl status  <server name>             display the status for the minecraft server"
+  echo -e "mctl restart <server name>             restart the minecraft server"
+  echo -e "mctl console <server name>             display the server console"
   echo
   echo -e "${BOLD}options:${RESET} "
   echo -e "mctl -s --send               send command to console without opening it"
   echo -e "mctl -h, --help              display this message"
   echo -e "mctl -f --force              force the event execution without prior warning"
+  echo
+  echo "mctl is a tool that handle a minecraft server execution, you can start, stop and restart a server as well as display the server's status, send commands to the console and more."
+  echo
+  echo -e "${BOLD}Exemple${RESET}:"
+  echo -e "     mctl stop -f survival                   stop the server named survival without waiting the 30s"
+  echo -e "     mctl console survival                   display the survival console"
+  echo
+  echo -e "The source code is available at https://github.com/Lordva/mctl"
   exit 1
 }
 
 function version(){
-  echo -e "mctl 0.1.2"
+  echo -e "mctl 1.0.0"
   exit 0
 }
 
-if [ $# -gt 2 ]; then
-  echo -e "[ ${RED}✕${RESET} ] too many arguments."
-  help
-fi
-
-for i in "$@"; do case $i in
-  start ) start ;;
-  stop ) stop ;;
-  restart ) restart ;;
-  status ) status ;;
-  console ) console ;;
-  -h | --help ) help ;;
-  -f | --force ) ISHARD=true ;;
-  * ) echo -e "[ ${RED}✕${RESET} ] Invalid argument" && help ;;
+for (( i=1; 1<=$#; i++ )); do
+  next=$((i+1)) 
+  case ${!i} in
+    start ) start ${!next} ;;
+    stop ) stop ${!next} ;;
+    restart ) restart ${!next} ;;
+    status ) status ${!next} ;;
+    console ) console ${!next} ;;
+    -h | --help ) help ;;
+    -f | --force ) ISHARD=true ;;
+    * ) echo -e "[ ${RED}✕${RESET} ] Invalid argument" && help ;;
 esac
 done
 
