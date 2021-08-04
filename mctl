@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# colors
+
+RESET="\033[0m"         # Normal color
+RED="\033[0;31m"        # Errors
+GREEN="\033[0;32m"      # Sucess
+BOLD="\033[1;01m"       # BOLD
+
+
 MINECRAFT_START_COMMAND="/usr/bin/java -Xms2G -Xmx8G -jar ${SERVER_FILE} nogui"
 ISHARD=false
 
@@ -35,30 +43,26 @@ progress-bar() {
 }
 
 check_if_running(){
-  if [ -e $PID_FILE ]; then
-    PID=cat $PID_FILE
-    if ps -p $PID; then
-      echo -e "[ERROR] minecraft server is already running. see mctl status for more information"
-      exit 1
-    fi
-    rm $PID_FILE
-  fi
   if tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
-    echo -e "[ERROR] tmux session exist but is running empty, delete session and retry"
-    exit 1
+    return 0
+  else
+    return 1
   fi
 }
 
 function start(){
-  check_if_running 
-  echo -e "[LOG] executing start command"
+  if check_if_running; then
+    echo -e "${RED}[ERROR]${RESET} tmux session is already running"
+    echo -e "check that the session is not running empty with : tmux -S ${TMUX_SOCKET_PATH} a -t ${TMUX_SESSION_NAME}"
+    exit 1
+  fi
   sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s minecraft -d 'bash /srv/mc/start.sh'" 
   exit 0
 }
 
 function stop(){
   if ! tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
-    echo -e "[ERROR] cannot stop server, server is offline"
+    echo -e "${RED}[ERROR]${RESET} cannot stop server, server is offline"
     exit 1
   fi
   if [ $ISHARD == false ]; then
@@ -75,21 +79,26 @@ function stop(){
 }
 
 function console(){
-  check_if_running
+  if ! check_if_running; then
+    echo -e "${RED}[ERROR]${RESET} server is not running"
+    exit 1
+  fi
   tail -f "$SERVER_PATH/logs/latest.log"
-  read -p "> " input
+  read -p -r "> " input
   tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME "${input}" Enter
   exit 0
 }
 
 function status(){
-  if tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
-    STATUS="running"
+  if check_if_running; then
+    echo -e "${GREEN}● Server is online${RESET}"
+    echo -e "Server latest logs: "
+    tmux -S $TMUX_SOCKET_PATH capture-pane -pt $TMUX_SESSION_NAME
   else
-    STATUS="stopped"
+    echo -e "${RED}● Server is offline${RESET}"
+    echo -e "  Server latest logs: "
+    tail $SERVER_PATH/logs/latest.log | awk 
   fi
-  echo $SHELL_PID
-  ps -A -o 'ppid pid command' | grep $SHELL_PID
   exit 0
 }
 
@@ -100,16 +109,16 @@ function restart(){
 }
 
 function help(){
-  echo -e "usage: mctl [option] <command>"
+  echo -e "${BOLD}usage${RESET}: mctl [option] <command>"
   echo -e ""
-  echo -e "commands:"
+  echo -e "${BOLD}commands:${RESET}"
   echo -e "mctl start                   start the minecraft server"
   echo -e "mctl stop                    stop the minecraft server"
   echo -e "mctl status                  display the status for the minecraft server"
   echo -e "mctl restart                 restart the minecraft server"
   echo -e "mctl console                 display the server console"
   echo
-  echo -e "options: "
+  echo -e "${BOLD}options:${RESET} "
   echo -e "mctl -s --send               send command to console without opening it"
   echo -e "mctl -h, --help              display this message"
   echo -e "mctl -f --force              force the event execution without prior warning"
@@ -134,10 +143,10 @@ for i in "$@"; do case $i in
   console ) console ;;
   -h | --help ) help ;;
   -f | --force ) ISHARD=true ;;
-  * ) echo -e "[ERROR] Invalid argument" && help ;;
+  * ) echo -e "${RED}[ERROR]${RESET} Invalid argument" && help ;;
 esac
 done
 
-echo -e "[ERROR] program require a command"
+echo -e "${RED}[ERROR]${RESET} program require a command"
 help
 
