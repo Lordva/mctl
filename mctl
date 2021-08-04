@@ -87,7 +87,7 @@ function console(){
     read -r -p "> " input
     case $input in
       exit | quit | stop ) exit 0 ;;
-      help | h ) echo -e "type exit to quit the console"
+      help | h ) echo -e "type exit to quit the console" ;;
       * ) tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME "${input}" Enter && tail -f $SERVER_PATH/logs/latest.log
     esac
   }
@@ -105,7 +105,12 @@ function status(){
   else
     echo -e "[ ${RED}✕${RESET} ] - Server is offline"
     echo -e "  Server latest logs: "
-    tail -n 5 $SERVER_PATH/logs/latest.log  
+    tail -n 5 $SERVER_PATH/logs/latest.log | awk '
+    /INFO/ {print "${GREEN} $0 "${RESET}"}
+    /WARN/ yellow
+    /*:*:*/ cian
+    /ERROR/ {print "${RED} $0 ${RESET}"}
+    ' 
   fi
   exit 0
 }
