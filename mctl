@@ -100,7 +100,7 @@ function status(){
     echo -e "[ ${GREEN}✔${RESET} ] - Server is online"
     echo
     echo -e "  Server latest logs: "
-    tmux -S $TMUX_SOCKET_PATH capture-pane -pt $TMUX_SESSION_NAME -A 5
+    tmux -S $TMUX_SOCKET_PATH capture-pane -pt $TMUX_SESSION_NAME -S -5
   else
     echo -e "[ ${RED}✕${RESET} ] - Server is offline"
     echo -e "  Server latest logs: "
