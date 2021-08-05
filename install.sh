@@ -8,8 +8,8 @@ install(){
   if [ -e "${INSTALL_DIR}" ]; then
     echo "${PKG} is already installed"
     echo "Updating ${PKG} from git"
-    command git --git-dir="${INSTALL_DIR}/.git" fetch
-    command git --get-dir="${INSTALL_DIR}/.git" reset
+    command git --git-dir="${INSTALL_DIR}/.git" fetch || echo >&2 "Failed to fetch" ; exit 1
+    command git --git-dir="${INSTALL_DIR}/.git" reset || echo >&2 "failed to reset" ; exit 1
   else
     echo "Dowloading ${PKG} from git to ${INSTALL_DIR}"
     command git clone ${GIT_URL} ${INSTALL_DIR} || echo >&2 "Failed to clone"; exit 1
