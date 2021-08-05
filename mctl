@@ -3,9 +3,7 @@
 ### TODO:
 # - debug multiserver support
 # - check si il peut y avoir des conflits entre servers
-# - config edit command
 # - ecrire un verificateur de config (dossier ./utils?)
-# - ecrire le script d'instalation
 # - coupler avec mcserver-installer ?
 # - ajouter licence
 # - finir readme et doc
@@ -23,8 +21,6 @@ GREEN="\033[0;32m"      # Sucess
 BOLD="\033[1;01m"       # BOLD
 
 ISHARD=false # check if the -f flag is used
-
-TMUX_SOCKET_PATH="/tmp/console_socket"
 
 progress-bar() {
   local duration=${1}
@@ -79,7 +75,10 @@ function start(){
     echo -e "check that the session is not running empty with : tmux -S ${TMUX_SOCKET_PATH} a -t ${TMUX_SESSION_NAME}"
     exit 1
   fi
-  sudo runuser -l minecraft -c "tmux -S /tmp/console_socket new -s $TMUX_SESSION_NAME -d 'bash /srv/mc/start.sh'" 
+  if ! sudo runuser -l $MINECRAFT_USER -c "tmux -S $TMUX_SOCKET_PATH new -s $TMUX_SESSION_NAME -d '$SERVER_START_COMMAND'"; then
+    echo -e >&2 "[${RED}✕${RESET}] Failed to start tmux session on socket $TMUX_SOCKET_PATH with user $MINECRAFT_USER running command: $SERVER_START_COMMAND"
+    exit 1
+  fi
   exit 0
 }
 
