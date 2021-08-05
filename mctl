@@ -1,5 +1,17 @@
 #!/bin/bash
 
+### TODO:
+# - debug multiserver support
+# - check si il peut y avoir des conflits entre servers
+# - config edit command
+# - ecrire un verificateur de config (dossier ./utils?)
+# - ecrire le script d'instalation
+# - coupler avec mcserver-installer ?
+# - ajouter licence
+# - finir readme et doc
+# - commenter
+
+
 source mctl.conf
 
 # colors
@@ -33,20 +45,21 @@ get_server(){
     help
   fi
   for i in $SERVER_LIST_DIRECTORY/*; do
-    if grep "SERVER_NAME=$1" $i; then
+    if grep -w "SERVER_NAME=$1" $i 2>&1 > /dev/null; then
       source $i
-      echo -e "then"
       success=0
-      shift
+      break 
     else
       success=1
     fi
   done
-  if [[ $success == 1 ]]; then
-    echo -e "[ ${RED}✕${RESET} ] Could not find a server named $1"
-    echo -e "Check if the 'SERVER_NAME' field is correctly setup in the server's config file"
-    exit 1
-  fi
+  case $success in
+    0 ) echo -e "[LOG] success, found server named $1" ;;
+    1 ) echo -e "[${RED}✕${RESET}] Could not find a server named $1"
+        echo -e "    Check if the 'SERVER_NAME' field is correctly setup in the server's config file"
+        exit 1 ;;
+    * ) echo -e "[${RED}✕${RESET}] Unexpected error when seaching for server"
+  esac
 }
 
 check_if_running(){
@@ -60,7 +73,7 @@ check_if_running(){
 function start(){
   get_server $1
   if check_if_running; then
-    echo -e "[ ${RED}✕${RESET} ] tmux session is already running"
+    echo -e "[${RED}✕${RESET}] tmux session is already running"
     echo -e "check that the session is not running empty with : tmux -S ${TMUX_SOCKET_PATH} a -t ${TMUX_SESSION_NAME}"
     exit 1
   fi
@@ -71,7 +84,7 @@ function start(){
 function stop(){
   get_server $1
   if ! tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
-    echo -e "[ ${RED}✕${RESET} ] cannot stop server, server is offline"
+    echo -e "[${RED}✕${RESET}] cannot stop server, server is offline"
     exit 1
   fi
   if [ $ISHARD == false ]; then
@@ -90,7 +103,7 @@ function stop(){
 function console(){
   get_server $1
   if ! check_if_running; then
-    echo -e "[ ${RED}✕${RESET} ] server is not running"
+    echo -e "[${RED}✕${RESET}] server is not running"
     exit 1
   fi
 
@@ -115,7 +128,7 @@ function status(){
     echo -e "  Server latest logs: "
     tmux -S $TMUX_SOCKET_PATH capture-pane -pt $TMUX_SESSION_NAME -S -5
   else
-    echo -e "[ ${RED}✕${RESET} ] - Server is offline"
+    echo -e "[${RED}✕${RESET}] - Server is offline"
     echo -e "  Server latest logs: "
     tail -n 5 $SERVER_PATH/logs/latest.log 
   fi
@@ -168,10 +181,10 @@ for (( i=1; 1<=$#; i++ )); do
     console ) console ${!next} ;;
     -h | --help ) help ;;
     -f | --force ) ISHARD=true ;;
-    * ) echo -e "[ ${RED}✕${RESET} ] Invalid argument" && help ;;
+    * ) echo -e "[${RED}✕${RESET}] Invalid argument" && help ;;
 esac
 done
 
-echo -e "[ ${RED}✕${RESET} ] program require a command"
+echo -e "[${RED}✕${RESET}] program require a command"
 help
 
