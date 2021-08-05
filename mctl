@@ -10,6 +10,7 @@
 # - ajouter licence
 # - finir readme et doc
 # - commenter
+# - list command
 
 
 source mctl.conf
@@ -41,12 +42,13 @@ progress-bar() {
 
 get_server(){
   if [ -z $1 ]; then
-    echo -e "[${RED} ${RESET}] Command require an argument"
+    echo -e "[${RED}✕${RESET}] Command require an argument"
     help
   fi
   for i in $SERVER_LIST_DIRECTORY/*; do
     if grep -w "SERVER_NAME=$1" $i 2>&1 > /dev/null; then
       source $i
+      SERVER_FILE_NAME=$i
       success=0
       break 
     else
@@ -141,6 +143,19 @@ function restart(){
   exit 0
 }
 
+function edit(){
+  get_server $1
+  if [ -z ${CONFIG_EDITOR} ]; then
+    echo -e >&2 "[${RED}✕${RESET}] the CONFIG_EDITOR parameter must be set in mctl.conf"
+    exit 1
+  fi
+  if ! ${CONFIG_EDITOR} $SERVER_FILE_NAME; then
+    echo -e >&2 "[${RED}✕${RESET}] Something went wrong when trying to open ${SERVER_FILE_NAME} with ${CONFIG_EDITOR} \n Do you have the right permissions ?"
+    exit 1
+  fi
+  exit 0
+  }
+
 function help(){
   echo -e "${BOLD}usage${RESET}: mctl [option] <command> <server name>"
   echo -e ""
@@ -150,6 +165,7 @@ function help(){
   echo -e "mctl status  <server name>             display the status for the minecraft server"
   echo -e "mctl restart <server name>             restart the minecraft server"
   echo -e "mctl console <server name>             display the server console"
+  echo -e "mctl edit    <server name>             edit the mctl config file for a specific server"
   echo
   echo -e "${BOLD}options:${RESET} "
   echo -e "mctl -s --send               send command to console without opening it"
@@ -167,7 +183,7 @@ function help(){
 }
 
 function version(){
-  echo -e "mctl 1.0.0"
+  echo -e "mctl 1.0.1"
   exit 0
 }
 
@@ -179,6 +195,7 @@ for (( i=1; 1<=$#; i++ )); do
     restart ) restart ${!next} ;;
     status ) status ${!next} ;;
     console ) console ${!next} ;;
+    edit ) edit ${!next} ;;
     -h | --help ) help ;;
     -f | --force ) ISHARD=true ;;
     * ) echo -e "[${RED}✕${RESET}] Invalid argument" && help ;;
