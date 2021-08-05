@@ -11,8 +11,10 @@
 # - list command
 
 
-source mctl.conf
 
+BASE_DIR=/usr/local/mctl
+
+source ${BASE_DIR}/mctl.conf
 # colors
 
 RESET="\033[0m"         # Normal color
