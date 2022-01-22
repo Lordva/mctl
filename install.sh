@@ -10,7 +10,7 @@ GREEN="\033[0;32m"      # Sucess
 BOLD="\033[1;01m"
 
 install(){
-  echo -e "[ - ] INSTALLING MCTL FROM GIT:"
+  echo "[ - ] INSTALLING MCTL FROM GIT:"
   if [ -e "${INSTALL_DIR}" ]; then
     echo "${PKG} is already installed"
     echo "Updating ${PKG} from git"
@@ -18,7 +18,7 @@ install(){
     command git --git-dir="${INSTALL_DIR}/.git" reset || echo >&2 "failed to reset" ; exit 1
   else
     echo "[ - ]Dowloading ${PKG} from git to ${INSTALL_DIR}"
-    command git clone ${GIT_URL} ${INSTALL_DIR} || echo >&2 "[${RED}✕${RESET}]Failed to clone"; exit 1
+    command git clone ${GIT_URL} ${INSTALL_DIR} || echo >&2 "[${RED}✕${RESET}]Failed to clone";
     chmod -R 755 ${INSTALL_DIR}/servers
     chmod 755 ${INSTALL_DIR}/mctl
     sudo ln -sf ${INSTALL_DIR}/mctl /usr/local/bin/mctl
@@ -26,18 +26,18 @@ install(){
 }
 
 check_requirements(){
-  echo -e "- Cheking for Git:"
+  echo "- Cheking for Git:"
   if ! git --version 2>&1 > /dev/null; then
     echo >&2 "Failed to install, git is needed for installation"
     exit 1
   fi
-  echo -e "OK"
-  echo -e "- Checking for TMUX:"
+  echo "OK"
+  echo "- Checking for TMUX:"
   if ! tmux -V 2>&1 > /dev/null; then
     echo >&2 -e "[${RED}✕${RESET}]Error tmux is needed for mctl to work"
     exit 1
   fi
-  echo -e "OK"
+  echo  "OK"
   echo -e"[${GREEN}✔${RESET}] Requirements are installed"
 }
 
@@ -47,7 +47,7 @@ install
 
 if [ -f "${INSTALL_DIR}/mctl" ]; then
   echo
-  echo -e "[${GREEN}✔]Done!${RESET}"
+  echo "[${GREEN}✔]Done!${RESET}"
   exit 0
 else
   echo >&2
