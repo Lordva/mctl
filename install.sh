@@ -19,8 +19,10 @@ install(){
   else
     echo "[ - ]Dowloading ${PKG} from git to ${INSTALL_DIR}"
     command git clone ${GIT_URL} ${INSTALL_DIR} || echo >&2 "[${RED}✕${RESET}]Failed to clone";
+    echo "Setting permissions..."
     chmod -R 755 ${INSTALL_DIR}/servers
     chmod 755 ${INSTALL_DIR}/mctl
+    echo "Adding Mctl to PATH"
     sudo ln -sf ${INSTALL_DIR}/mctl /usr/local/bin/mctl
   fi
 }
