@@ -2,7 +2,7 @@
 
 PKG="mctl"
 GIT_URL="https://github.com/lordva/mctl"
-INSTALL_DIR="/usr/local/mctl"
+INSTALL_DIR="/opt/mctl"
 
 RESET="\033[0m"         # Normal color
 RED="\033[0;31m"        # Errors
@@ -20,8 +20,8 @@ install(){
     echo "[ - ]Dowloading ${PKG} from git to ${INSTALL_DIR}"
     command git clone ${GIT_URL} ${INSTALL_DIR} || echo >&2 "[${RED}✕${RESET}]Failed to clone";
     echo "Setting permissions..."
-    chmod -R 755 ${INSTALL_DIR}/servers
-    chmod 755 ${INSTALL_DIR}/mctl
+    sudo chmod -R 755 ${INSTALL_DIR}/servers
+    sudo chmod 755 ${INSTALL_DIR}/mctl
     echo "Adding Mctl to PATH"
     sudo ln -sf ${INSTALL_DIR}/mctl /usr/local/bin/mctl
   fi
