@@ -20,14 +20,14 @@ install(){
 }
 
 check_requirements(){
-  if ! bash --help; then
+  if ! bash --help 2>&1 > /dev/null; then
     echo >&2 "Error Bash is needed for mctl to work"
   fi
-  if ! git --version; then
+  if ! git --version 2>&1 > /dev/null; then
     echo >&2 "Failed to install, git is needed for installation"
     exit 1
   fi
-  if ! tmux -V; then
+  if ! tmux -V 2>&1 > /dev/null; then
     echo >&2 "Error tmux is needed for mctl to work"
     exit 1
   fi

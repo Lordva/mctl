@@ -9,7 +9,7 @@ mctl currently only support a single Minecraft server but will in the future be 
 
 Installing Mctl is very easy, just run:
 ```bash
-sh -c "$(curl -fsSL https://raw.github.com/lordva/mctl/master/tools/install.sh)"
+sh -c "$(curl -fsSL https://raw.github.com/lordva/mctl/master/install.sh)"
 ```
 
 to install Mctl from source you first need to clone the repo:
