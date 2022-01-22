@@ -13,17 +13,27 @@ install(){
   else
     echo "Dowloading ${PKG} from git to ${INSTALL_DIR}"
     command git clone ${GIT_URL} ${INSTALL_DIR} || echo >&2 "Failed to clone"; exit 1
-    chmod -R 755 ${INSTALL_DIR}/servers 
+    chmod -R 755 ${INSTALL_DIR}/servers
     chmod 755 ${INSTALL_DIR}/mctl
     sudo ln -sf ${INSTALL_DIR}/mctl /usr/local/bin/mctl
   fi
 }
 
-if git --version; then
-  install;
-else
-  echo >&2 "Failed to install, git is needed for installation"
-fi
+check_requirements(){
+  if ! bash --help; then
+    echo >&2 "Error Bash is needed for mctl to work"
+  fi
+  if ! git --version; then
+    echo >&2 "Failed to install, git is needed for installation"
+    exit 1
+  fi
+  if ! tmux -V; then
+    echo >&2 "Error tmux is needed for mctl to work"
+    exit 1
+  fi
+}
+
+check_requirements
 
 if [ -f "${INSTALL_DIR}/mctl" ]; then
   echo

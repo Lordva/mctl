@@ -7,7 +7,6 @@
 # - coupler avec mcserver-installer ?
 # - ajouter licence
 # - finir readme et doc
-# - commenter
 # - list command
 
 
@@ -24,6 +23,7 @@ BOLD="\033[1;01m"       # BOLD
 
 ISHARD=false # check if the -f flag is used
 
+# display a progress bar for long duration command
 progress-bar() {
   local duration=${1}
     already_done() { for ((done=0; done<$elapsed; done++)); do printf "▇"; done }
@@ -38,6 +38,7 @@ progress-bar() {
   clean_line
 }
 
+# check for a specific server
 get_server(){
   if [ -z $1 ]; then
     echo -e "[${RED}✕${RESET}] Command require an argument"
@@ -48,7 +49,7 @@ get_server(){
       source $i
       SERVER_FILE_NAME=$i
       success=0
-      break 
+      break
     else
       success=1
     fi
@@ -62,6 +63,7 @@ get_server(){
   esac
 }
 
+#Check if Tmux session is running (does not say if the server itself is running, just the tmux session)
 check_if_running(){
   if tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
     return 0
@@ -70,6 +72,7 @@ check_if_running(){
   fi
 }
 
+#Start Tmux session and minecraft server
 function start(){
   get_server $1
   if check_if_running; then
@@ -84,12 +87,14 @@ function start(){
   exit 0
 }
 
+# Stop minecraft server and Tmux session
 function stop(){
   get_server $1
   if ! tmux -S $TMUX_SOCKET_PATH ls | grep $TMUX_SESSION_NAME > /dev/null 2>&1; then
     echo -e "[${RED}✕${RESET}] cannot stop server, server is offline"
     exit 1
   fi
+  # Stop server with a 30s countdown
   if [ $ISHARD == false ]; then
     tmux -S $TMUX_SOCKET_PATH send-keys -t $TMUX_SESSION_NAME 'say Arret du serveur dans 30 secondes' Enter
     echo -e "[LOG] sleeping for 30s..."
@@ -103,6 +108,7 @@ function stop(){
   exit 0
 }
 
+# Get user access to console [WIP]
 function console(){
   get_server $1
   if ! check_if_running; then
@@ -123,6 +129,7 @@ function console(){
   exit 0
 }
 
+# Get Tmux session status and latest logs
 function status(){
   get_server $1
   if check_if_running; then
@@ -133,17 +140,19 @@ function status(){
   else
     echo -e "[${RED}✕${RESET}] - Server is offline"
     echo -e "  Server latest logs: "
-    tail -n 5 $SERVER_PATH/logs/latest.log 
+    tail -n 5 $SERVER_PATH/logs/latest.log
   fi
   exit 0
 }
 
+# Restart the server
 function restart(){
   stop $1
   start $1
   exit 0
 }
 
+# Edit the config file for a server
 function edit(){
   get_server $1
   if [ -z ${CONFIG_EDITOR} ]; then
@@ -157,6 +166,7 @@ function edit(){
   exit 0
   }
 
+# Display help message
 function help(){
   echo -e "${BOLD}usage${RESET}: mctl [option] <command> <server name>"
   echo -e ""
@@ -189,7 +199,7 @@ function version(){
 }
 
 for (( i=1; 1<=$#; i++ )); do
-  next=$((i+1)) 
+  next=$((i+1))
   case ${!i} in
     start ) start ${!next} ;;
     stop ) stop ${!next} ;;
@@ -205,4 +215,3 @@ done
 
 echo -e "[${RED}✕${RESET}] program require a command"
 help
-
