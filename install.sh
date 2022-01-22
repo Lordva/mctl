@@ -27,6 +27,23 @@ install(){
   fi
 }
 
+# Uninstall script will not delete any files to prevent exploit of the rm -rf command and will just move mctl to a .old folder
+uninstall(){
+  if [ ! -e "${INSTALL_DIR}" ]; then
+    echo "Error: Mctl is not installed"
+    exit 1
+  fi
+  echo "Confirm you want to UNINSTALL Mctl [y/n]: "
+  read -r -p "> " input
+  case $input in
+    y | yes | Y | YES ) echo "Uninstalling Mctl";;
+    * ) echo "Abort." & exit 0
+  esac
+  echo "Removing files in ${INSTALL_DIR}"
+  command sudo mv ${INSTALL_DIR} /opt/.old || echo >&2 "Failed to move ${INSTALL_DIR} to /opt/.old"
+  command sudo unlink /usr/local/bin/mctl || echo >&2 "Failed to remove softlink at /usr/local/bin/mctl"
+}
+
 check_requirements(){
   echo "- Cheking for Git:"
   if ! git --version 2>&1 > /dev/null; then
@@ -43,9 +60,26 @@ check_requirements(){
   echo -e"[${GREEN}✔${RESET}] Requirements are installed"
 }
 
+if [[ $1 == "-r" || $1 == "--remove" ]]; then
+  uninstall
+  exit 0
+fi
+
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+  echo "usage: bash install.sh [option]"
+  echo ""
+  echo "options:"
+  echo "-h --help         Display this message"
+  echo "-r --remove       Uninstall mctl"
+  echo ""
+  echo "run install.sh to INSTALL mctl."
+  echo "run install.sh --remove to UNINSTALL mctl"
+  exit 0
+fi
+
 echo -e "[ - ] Cheking for requirements..."
 check_requirements
-install
+#install
 
 if [ -f "${INSTALL_DIR}/mctl" ]; then
   echo

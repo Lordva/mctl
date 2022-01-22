@@ -11,7 +11,7 @@
 
 
 
-BASE_DIR=/usr/local/mctl
+BASE_DIR=/opt/mctl
 
 source ${BASE_DIR}/mctl.conf
 # colors
@@ -38,11 +38,11 @@ progress-bar() {
   clean_line
 }
 
-# check for a specific server
+# check for a specific server and load its config
 get_server(){
   if [ -z $1 ]; then
     echo -e "[${RED}✕${RESET}] Command require an argument"
-    help
+    short_help
   fi
   for i in $SERVER_LIST_DIRECTORY/*; do
     if grep -w "SERVER_NAME=$1" $i 2>&1 > /dev/null; then
@@ -166,6 +166,15 @@ function edit(){
   exit 0
   }
 
+# List all configs
+  function list(){
+    echo "Found those configs in ${SERVER_LIST_DIRECTORY}:"
+    for i in $SERVER_LIST_DIRECTORY/*; do
+      echo ${i:18}
+    done
+    exit 0
+  }
+
 # Display help message
 function help(){
   echo -e "${BOLD}usage${RESET}: mctl [option] <command> <server name>"
@@ -193,13 +202,20 @@ function help(){
   exit 1
 }
 
+function short_help() {
+  echo -e "${BOLD}usage${RESET}: mctl [option] <command> <server name>"
+  echo -e "use mctl --help to display the full help message"
+  exit 1
+}
+
 function version(){
   echo -e "mctl 1.0.1"
   exit 0
 }
 
+# loop through all the args
 for (( i=1; 1<=$#; i++ )); do
-  next=$((i+1))
+  next=$((i+1)) # the next argument (name of the server)
   case ${!i} in
     start ) start ${!next} ;;
     stop ) stop ${!next} ;;
@@ -207,11 +223,13 @@ for (( i=1; 1<=$#; i++ )); do
     status ) status ${!next} ;;
     console ) console ${!next} ;;
     edit ) edit ${!next} ;;
-    -h | --help ) help ;;
+    list ) list ;;
+    --help ) help ;;
+    -h ) short_help ;;
     -f | --force ) ISHARD=true ;;
-    * ) echo -e "[${RED}✕${RESET}] Invalid argument" && help ;;
+    * ) echo -e "[${RED}✕${RESET}] Invalid argument" && short_help ;;
 esac
 done
 
 echo -e "[${RED}✕${RESET}] program require a command"
-help
+short_help
