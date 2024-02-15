@@ -7,8 +7,6 @@
 # - coupler avec mcserver-installer ?
 # - ajouter licence
 # - finir readme et doc
-# - list command
-
 
 
 BASE_DIR=/opt/mctl
@@ -85,6 +83,13 @@ function start(){
     exit 1
   fi
   exit 0
+}
+
+function create(){
+  if [ -z $1 ]; then
+    echo -e "[${RED}✕${RESET}] Command require an argument"
+    short_help
+  fi
 }
 
 # Stop minecraft server and Tmux session

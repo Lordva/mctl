@@ -60,12 +60,12 @@ check_requirements(){
   echo -e"[${GREEN}✔${RESET}] Requirements are installed"
 }
 
-if [[ $1 == "-r" || $1 == "--remove" ]]; then
+if [ $1 = "-r" || $1 = "--remove" ]]; then
   uninstall
   exit 0
 fi
 
-if [[ $1 == "-h" || $1 == "--help" ]]; then
+if [ $1 = "-h" || $1 = "--help" ]; then
   echo "usage: bash install.sh [option]"
   echo ""
   echo "options:"
@@ -77,7 +77,7 @@ if [[ $1 == "-h" || $1 == "--help" ]]; then
   exit 0
 fi
 
-echo -e "[ - ] Cheking for requirements..."
+echo "[ - ] Cheking for requirements..."
 check_requirements
 #install
 
