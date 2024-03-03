@@ -9,12 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@prisma/client": "^5.10.2",
+    "dockerode": "^4.0.2",
     "next": "14.1.0",
     "next-auth": "^4.24.6",
+    "prisma": "^5.10.2",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.10",
+    "@types/dockerode": "^3.3.24",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -1,1 +1,2 @@
 ./servers/minecraft.conf
+mctl_web/.env
